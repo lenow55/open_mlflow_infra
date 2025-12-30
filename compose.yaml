@@ -18,7 +18,7 @@ services:
       start_period: 80s
 
   psql-init:
-    image: lenow/sql-initer:v2.1 # ваш образ с хаба
+    image: lenow/sql-initer:v2.2 # ваш образ с хаба
     depends_on:
       postgres:
         condition: service_healthy
