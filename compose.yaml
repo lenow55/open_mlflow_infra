@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     env_file: ./postgres/postgres.env
     ports:
       - 8533:5432
@@ -18,7 +18,7 @@ services:
       start_period: 80s
 
   psql-init:
-    image: lenow/sql-initer:v2.2 # ваш образ с хаба
+    image: lenow/sql-initer:v2.3 # ваш образ с хаба
     depends_on:
       postgres:
         condition: service_healthy
