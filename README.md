@@ -13,27 +13,42 @@ Mlflow поддерживает работу только с экспериме�
 
 ## Архитектура шаблона
 
+<p align="center">
+  <a href="https://gist.githubusercontent.com/angryflaren/31d6b0081d05f51a53c14a798a682e82/raw/mlflow_infra_overview.svg" target="_blank">
+    <img src="https://gist.githubusercontent.com/angryflaren/31d6b0081d05f51a53c14a798a682e82/raw/mlflow_infra_overview.svg" alt="Архитектура MLflow" width="100%">
+  </a>
+  <br>
+  <sub><i>💡 Нажмите на схему, чтобы открыть версию в полном размере</i></sub>
+</p>
+
+<details>
+<summary><b>📂 Структура директорий и файлов проекта</b></summary>
+<br>
+
 ```txt
 open_mlflow_infra
- ├╴  minio
- │ ├╴  buckets_list.txt - список бакетов minio под разные проекты
- │ ├╴  minio.env - переменные для контейнера minio
- │ └╴  minio_init.sh - команды для создания бакетов в minio
+ ├╴  rustfs
+ │ ├╴  buckets_list.txt - список бакетов rustfs под разные проекты
+ │ ├╴  rustfs.env - переменные для контейнера rustfs
+ │ └╴  rustfs_init.sh - команды для создания бакетов в rustfs
+ ├╴  rustfs_data - локальная директория для хранения данных S3 (bind-mount)
  ├╴  mlflow
  │ ├╴  envs - папка с окружениями mlflow
  │ │ └╴  test_project.env - окружение тестового проекта в mlflow
  │ │ ... - сюда можно добавлять свои окружения
  │ ├╴  clean_del.sql - команды sql для полного удаления экспериментов из БД
  │ ├╴  entrypoint.sh - команда запуска mlflow сервера (можно поменять на свою)
- │ └╴  minio_connect.env - переменные для подключения к minio из mlflow
+ │ └╴  s3_connect.env - переменные для подключения к S3 (rustfs) из mlflow
  ├╴  postgres
  │ ├╴  postgres.env - переменные для postgres контейнера
  │ └╴  projects_db_configs.json - json список с базами данных для проектов
+ ├╴  postgres_data - локальная директория для хранения данных БД (bind-mount)
  ├╴  README.md - документация по проекту
- ├╴  compose.yaml - файл с инфраструктурой для mlflow (db, s3, init bs/s3)
+ ├╴  compose.yaml - файл с инфраструктурой для mlflow (db, s3, init db/s3)
  ├╴  .env - здесь можно задать какой проект запускать
  └╴  test_flow.compose.yaml - compose файл с сервером mlflow для проекта
 ```
+</details>
 
 ## Запуск
 
@@ -49,12 +64,12 @@ docker compose up -d
 
 Адреса:
 
-- Mlflow: `http://localhot:5801`
+- Mlflow: `http://localhost:5801`
 - postgres: `localhost:8533`
-- minio api: `localhost:9574`
-- minio ui: `http://localhost:9321`
+- rustfs api: `localhost:9574`
+- rustfs ui: `http://localhost:9321`
 
-По умолчанию будет создан бакет `bucket1` в minio.
+По умолчанию будет создан бакет `bucket1` в rustfs.
 В postgres будет создана база `mlflow` для проекта test
 
 ### Рабочий проект
@@ -80,7 +95,7 @@ COMPOSE_PATH_SEPARATOR=','
 
 Чтобы создать свой проект, нужно провести следующие манипуляции:
 
-1. указать имя бакета для проекта в файле `minio/buckets_list.txt`
+1. указать имя бакета для проекта в файле `rustfs/buckets_list.txt`
 (сохранять файл нужно обязательно в unix формате **LF line end**)
 [info](https://labex.io/tutorials/linux-how-to-normalize-line-endings-in-linux-text-files-418212)
 2. в файле `postgres/projects_db_configs.json` добавить конфигурацию бд

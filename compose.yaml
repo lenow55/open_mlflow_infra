@@ -23,43 +23,50 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./postgres/projects_db_configs.json/:/app/config.json
+      - ./postgres/projects_db_configs.json:/app/config.json
     restart: "no"
 
-  minio:
-    image: minio/minio
+  rustfs:
+    image: rustfs/rustfs:latest
     ports:
       - "9574:9000"
-      # MinIO Console is available at http://localhost:9321
+      # RustFS Console: http://localhost:9321
       - "9321:9001"
-    env_file: ./minio/minio.env
+    env_file: ./rustfs/rustfs.env
+    environment:
+      - RUSTFS_VOLUMES=/data
+      - RUSTFS_ADDRESS=0.0.0.0:9000
+      - RUSTFS_CONSOLE_ADDRESS=0.0.0.0:9001
+      - RUSTFS_CONSOLE_ENABLE=true
+      - RUSTFS_CONSOLE_CORS_ALLOWED_ORIGINS=*
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 1s
-      timeout: 10s
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9000/health"]
+      interval: 10s
+      timeout: 5s
       retries: 5
-    command: server /data --console-address ":9001"
+      start_period: 10s
     volumes:
-      - minio_data:/data
+      - rustfs_data:/data
 
-  minio-create-bucket:
-    image: minio/mc
+  rustfs-create-bucket:
+    image: rustfs/rc:latest
     depends_on:
-      minio:
+      rustfs:
         condition: service_healthy
-    env_file: ./minio/minio.env
-    entrypoint: /minio_init.sh
+    env_file: ./rustfs/rustfs.env
+    entrypoint: ["/bin/sh", "-c", "tr -d '\\r' < /rustfs_init.sh | /bin/sh"]
     volumes:
-      - ./minio/buckets_list.txt:/buckets_list
-      - ./minio/minio_init.sh:/minio_init.sh
+      - ./rustfs/buckets_list.txt:/buckets_list
+      - ./rustfs/rustfs_init.sh:/rustfs_init.sh
+    restart: "no"
 
 volumes:
-  minio_data:
+  rustfs_data:
     driver: local
     driver_opts:
       type: "none"
       o: "bind"
-      device: "./minio_data"
+      device: "./rustfs_data"
   postgres_data:
     driver: local
     driver_opts:

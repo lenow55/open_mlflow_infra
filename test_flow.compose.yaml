@@ -1,19 +1,23 @@
 services:
   test-mlflow-server:
-    image: lenow/mlflow-server:v3.14.0 # ваш образ с хаба
+    image: lenow/mlflow-server:v3.14.0
     depends_on:
       postgres:
         condition: service_healthy
-      minio:
+      psql-init:
+        condition: service_completed_successfully
+      rustfs:
         condition: service_healthy
+      rustfs-create-bucket:
+        condition: service_completed_successfully
     env_file:
       - ./mlflow/envs/test_project.env
-      - ./mlflow/minio_connect.env
+      - ./mlflow/s3_connect.env
     ports:
       - 5801:5000
     volumes:
       - ./mlflow/entrypoint.sh:/entrypoint.sh
-    entrypoint: /entrypoint.sh
+    entrypoint: ["/bin/sh", "-c", "tr -d '\\r' < /entrypoint.sh | /bin/sh"]
     healthcheck:
       test:
         [
