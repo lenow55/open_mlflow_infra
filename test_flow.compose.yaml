@@ -1,6 +1,6 @@
 services:
   test-mlflow-server:
-    image: lenow/mlflow-server:v3.14.0
+    image: lenow/mlflow-server:v3.17.2
     depends_on:
       postgres:
         condition: service_healthy
@@ -17,7 +17,7 @@ services:
       - 5801:5000
     volumes:
       - ./mlflow/entrypoint.sh:/entrypoint.sh
-    entrypoint: ["/bin/sh", "-c", "tr -d '\\r' < /entrypoint.sh | /bin/sh"]
+    entrypoint: /entrypoint.sh
     healthcheck:
       test:
         [

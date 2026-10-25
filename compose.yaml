@@ -26,6 +26,19 @@ services:
       - ./postgres/projects_db_configs.json:/app/config.json
     restart: "no"
 
+  s3-backup-restore:
+    image: busybox
+    volumes:
+      - ./rustfs/backup-restore.sh:/backup-restore.sh:ro
+      - ./s3_data:/backup
+      - rustfs_data:/data
+    environment:
+      BACKUP: 0
+    entrypoint:
+      - sh
+      - /backup-restore.sh
+    restart: "no"
+
   rustfs:
     image: rustfs/rustfs:latest
     ports:
@@ -33,6 +46,9 @@ services:
       # RustFS Console: http://localhost:9321
       - "9321:9001"
     env_file: ./rustfs/rustfs.env
+    depends_on:
+      s3-backup-restore:
+        condition: service_completed_successfully
     environment:
       - RUSTFS_VOLUMES=/data
       - RUSTFS_ADDRESS=0.0.0.0:9000
@@ -54,7 +70,9 @@ services:
       rustfs:
         condition: service_healthy
     env_file: ./rustfs/rustfs.env
-    entrypoint: ["/bin/sh", "-c", "tr -d '\\r' < /rustfs_init.sh | /bin/sh"]
+    entrypoint:
+      - sh
+      - /rustfs_init.sh
     volumes:
       - ./rustfs/buckets_list.txt:/buckets_list
       - ./rustfs/rustfs_init.sh:/rustfs_init.sh
@@ -62,11 +80,12 @@ services:
 
 volumes:
   rustfs_data:
+  backup_restore:
     driver: local
     driver_opts:
       type: "none"
       o: "bind"
-      device: "./rustfs_data"
+      device: "./s3_data"
   postgres_data:
     driver: local
     driver_opts:

@@ -3,3 +3,5 @@ rustfs_data/*
 !rustfs_data/stub
 postgres_data/*
 !postgres_data/stub
+s3_data/*
+!s3_data/stub
