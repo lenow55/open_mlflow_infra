@@ -26,17 +26,17 @@ services:
       - ./postgres/projects_db_configs.json:/app/config.json
     restart: "no"
 
-  s3-backup-restore:
+  backup-restore:
     image: busybox
     volumes:
-      - ./rustfs/backup-restore.sh:/backup-restore.sh:ro
+      - ./backup-restore.sh:/backup.sh:ro
       - ./s3_data:/backup
+      - postgres_data:/db
       - rustfs_data:/data
-    environment:
-      BACKUP: 0
-    entrypoint:
-      - sh
-      - /backup-restore.sh
+    entrypoint: sh
+    command:
+      - /backup.sh
+      - --restore
     restart: "no"
 
   rustfs:
@@ -47,7 +47,7 @@ services:
       - "9321:9001"
     env_file: ./rustfs/rustfs.env
     depends_on:
-      s3-backup-restore:
+      backup-restore:
         condition: service_completed_successfully
     environment:
       - RUSTFS_VOLUMES=/data
@@ -80,15 +80,10 @@ services:
 
 volumes:
   rustfs_data:
+  postgres_data:
   backup_restore:
     driver: local
     driver_opts:
       type: "none"
       o: "bind"
       device: "./s3_data"
-  postgres_data:
-    driver: local
-    driver_opts:
-      type: "none"
-      o: "bind"
-      device: "./postgres_data"
