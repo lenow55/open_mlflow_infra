@@ -26,6 +26,25 @@ services:
       - ./postgres/projects_db_configs.json:/app/config.json
     restart: "no"
 
+  pg-backup-restore:
+    image: postgres:18-alpine
+    depends_on:
+      psql-init:
+        condition: service_completed_successfully
+    env_file:
+      - ./postgres/postgres.env
+    environment:
+      BACKUP: 0
+      DB_HOST: postgres
+      DB_NAME: mlflow
+    volumes:
+      - ./postgres_data:/backup
+      - ./postgres/pg_backup_restore.sh:/pg_backup_restore.sh:ro
+    entrypoint:
+      - sh
+      - /pg_backup_restore.sh
+    restart: "no"
+
   s3-backup-restore:
     image: busybox
     volumes:
@@ -80,15 +99,4 @@ services:
 
 volumes:
   rustfs_data:
-  backup_restore:
-    driver: local
-    driver_opts:
-      type: "none"
-      o: "bind"
-      device: "./s3_data"
   postgres_data:
-    driver: local
-    driver_opts:
-      type: "none"
-      o: "bind"
-      device: "./postgres_data"
