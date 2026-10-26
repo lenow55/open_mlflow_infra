@@ -6,6 +6,8 @@ services:
         condition: service_healthy
       psql-init:
         condition: service_completed_successfully
+      pg-backup-restore:
+        condition: service_completed_successfully
       rustfs:
         condition: service_healthy
       rustfs-create-bucket:

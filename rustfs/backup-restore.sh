@@ -21,7 +21,7 @@ case "${BACKUP}" in
 
   log "Удаляем все файлы в ${BACKUP_DIR}"
   mkdir -p "${BACKUP_DIR}"
-  find "${BACKUP_DIR}" -mindepth 1 -delete
+  find "${BACKUP_DIR}" -mindepth 1 ! -name "stub" -delete
 
   log "Собираем tar-архив ${DATA_DIR} -> ${ARCHIVE_PATH}"
   tar -czf "${ARCHIVE_PATH}" -C / data
